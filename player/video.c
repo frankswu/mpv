@@ -879,7 +879,7 @@ void write_video(struct MPContext *mpctx, double endpts)
     double video_speed_correction = 1.0;
     int drop_repeat = 0;
     double vsync = vo_get_vsync_interval(vo) / 1e6;
-    if (vsync > 0 && diff > 0 && opts->video_sync_mode == 1 &&
+    if (vsync > 0 && diff > 0 && diff <= 0.05 && opts->video_sync_mode == 1 &&
         (vo->driver->caps & VO_CAP_SYNC_DISPLAY) &&
         !using_spdif_passthrough(mpctx))
     {
