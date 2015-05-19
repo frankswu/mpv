@@ -42,6 +42,8 @@
 #include "video/decode/dec_video.h"
 #include "video/decode/vd.h"
 #include "video/out/vo.h"
+#include "audio/filter/af.h"
+#include "audio/decode/dec_audio.h"
 
 #include "core.h"
 #include "command.h"
@@ -753,6 +755,13 @@ static void init_vo(struct MPContext *mpctx)
     mp_notify(mpctx, MPV_EVENT_VIDEO_RECONFIG, NULL);
 }
 
+static bool using_spdif_passthrough(struct MPContext *mpctx)
+{
+    if (mpctx->d_audio && mpctx->d_audio->afilter)
+        return AF_FORMAT_IS_SPECIAL(mpctx->d_audio->afilter->output.format);
+    return false;
+}
+
 // Find a speed factor such that the display FPS is an integer multiple of the
 // effective video FPS. If this is not possible, try to do it for multiples,
 // which still leads to an improved end result.
@@ -871,7 +880,8 @@ void write_video(struct MPContext *mpctx, double endpts)
     int drop_repeat = 0;
     double vsync = vo_get_vsync_interval(vo) / 1e6;
     if (vsync > 0 && diff > 0 && opts->video_sync_mode == 1 &&
-        (vo->driver->caps & VO_CAP_SYNC_DISPLAY))
+        (vo->driver->caps & VO_CAP_SYNC_DISPLAY) &&
+        !using_spdif_passthrough(mpctx))
     {
         // Attempt to stabilize jittery timestamps. Always picking the maximum
         // of the average of the previous and the current frame duration is a
